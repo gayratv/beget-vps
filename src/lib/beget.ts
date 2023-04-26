@@ -2,7 +2,7 @@ import '../helpers/dotenv-init.js';
 import axios, { AxiosHeaders, AxiosInstance } from 'axios';
 import { VPSlist } from './beget-types-vps-list.js';
 import fs from 'node:fs/promises';
-import * as process from 'process';
+import path from 'node:path';
 
 interface CreateVPSparams {
   display_name: string; //  Отображаемое имя VPS
@@ -237,21 +237,24 @@ export class Beget {
   async generateConfigSSH(
     configFileName = 'C:\\Users\\gena6\\.ssh\\config',
     known_hosts = 'C:\\Users\\gena6\\.ssh\\known_hosts',
+    lunix = false,
   ) {
     let configText: string = await fs.readFile(configFileName, 'utf8');
     const separator = '#------';
     const ind = configText.search(separator);
     if (ind === -1) return;
-    configText = configText.substring(1, ind + separator.length) + '\n\n';
+    configText = configText.substring(0, ind + separator.length) + '\n\n';
 
     const vpsList = await this.getVPSlist();
+    const dosSSHpriv = 'C:\\Users\\gena6\\.ssh\\ansible\\id_rsa.priv';
+    const ubuntuSSHpriv = '~/.ssh/ansible/id_rsa.priv';
 
     vpsList.vps.forEach((val) => {
       const newSSH = `
 host ${val.display_name}
   HostName ${val.ip_address}
   User root
-  IdentityFile C:\\Users\\gena6\\.ssh\\ansible\\id_rsa.priv
+  IdentityFile ${lunix ? ubuntuSSHpriv : dosSSHpriv}
       
       `;
       configText += newSSH;
@@ -260,6 +263,32 @@ host ${val.display_name}
     try {
       await fs.unlink(known_hosts);
     } catch (err) {}
+    console.log('Конфиг сформирован');
+    // return configText;
+  }
+
+  async generateAnsibleIP(dirStore = 'F:\\_prg\\docker\\docker-swarm-ansible\\group_vars') {
+    const vpsList = await this.getVPSlist();
+
+    let configText = '';
+    vpsList.vps.forEach((val) => {
+      const newIP = `${val.display_name}_ip : ${val.ip_address} \n`;
+      configText += newIP;
+    });
+    await fs.writeFile(path.resolve(dirStore, 'beget.yml'), configText, 'utf8');
+    console.log('Файл с IP сформирован');
+    // return configText;
+  }
+
+  async generateAnsibleIP2(dirStore = 'F:\\_prg\\docker\\docker-swarm-ansible\\host_vars') {
+    const vpsList = await this.getVPSlist();
+
+    vpsList.vps.forEach(async (val) => {
+      const newIP = `---\nansible_host: ${val.ip_address} \n`;
+      const fname = val.display_name === 'ans1' ? 'master' : val.display_name;
+      await fs.writeFile(path.resolve(dirStore, fname), newIP, 'utf8');
+    });
+    console.log('Файл с IP сформирован');
     // return configText;
   }
 }
