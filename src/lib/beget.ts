@@ -329,4 +329,43 @@ host ${val.display_name}
     console.log('Файл с IP сформирован');
     // return configText;
   }
+
+  async generateAnsibleInventory(fileName = 'F:\\_prg\\docker\\docker-swarm-ansible\\inventory\\inventory.yml') {
+    // async generateAnsibleInventory(fileName = 'F:\\tempg\\inventory.yml') {
+    const vpsList = await this.getVPSlist();
+    const hosts = vpsList.vps.map((val) => ({ displayName: val.display_name, ip: val.ip_address }));
+    const managerHost = hosts.find((val) => val.displayName === 'ans1');
+    const workerHosts = hosts.filter((val) => val.displayName !== 'ans1');
+
+    let resultInventory = `---
+all:
+  children:
+    manager:
+      hosts:
+        master:
+          ansible_host: ${managerHost.ip}
+    worker:
+      hosts:              
+    `;
+
+    workerHosts.forEach((val) => {
+      resultInventory += `
+        ${val.displayName}:
+          ansible_host: ${val.ip}
+      `;
+    });
+
+    resultInventory += `
+  vars:
+    ansible_user: docker
+    ansible_connection: ssh
+    ansible_ssh_private_key_file: "~/.ssh/ansible/id_rsa.priv"
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+    ansible_python_interpreter: "/usr/bin/python3"    
+    `;
+
+    // return resultInventory;
+    await fs.writeFile(fileName, resultInventory, 'utf8');
+    console.log('generateAnsibleInventory OK');
+  }
 }

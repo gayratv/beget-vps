@@ -12,7 +12,7 @@ await beget.getToken();
 // console.log(await beget.deleteVPS('6e01d119-bd4b-4e29-bb53-77573221ab0d'));
 // console.log(await beget.getVPSlist());
 
-const createNewVPS = 3;
+const createNewVPS = 4;
 switch (createNewVPS) {
   case 1:
     console.log(await beget.createVPS2('ans1'));
@@ -34,4 +34,8 @@ switch (createNewVPS) {
     break;
   case 3:
     console.log(await beget.createVPS3('test1'));
+    break;
+  case 4:
+    await beget.generateAnsibleInventory();
+    break;
 }
