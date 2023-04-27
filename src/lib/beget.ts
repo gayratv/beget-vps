@@ -8,7 +8,10 @@ interface CreateVPSparams {
   display_name: string; //  Отображаемое имя VPS
   hostname: string; //  Имя хоста в операционной системе
   description?: string; //   Дополнительное описание VPS (необязательное поле)
-  configuration_id: string; //  Конфигурация: Идентификатор необходимой конфигурации (тариф)
+
+  // укажи либо configuration_id либо configuration_params
+
+  configuration_id?: string; //  Конфигурация: Идентификатор необходимой конфигурации (тариф)
 
   // Конфигурация: Параметры конфигурации VPS
   configuration_params?: {
@@ -189,6 +192,41 @@ export class Beget {
       display_name: display_name,
       hostname: display_name,
       configuration_id: 'simple_v4',
+
+      // Информация о ПО, которое необходимо установить
+      software: {
+        id: 1938, // ubuntu 22.04
+      },
+      ssh_keys: [ssh_key],
+      password: process.env.VPS_PASSWORD,
+      beget_ssh_access_allowed: true,
+
+      // Приватные сети, к которым необходимо подключить VPS (необязательное поле)
+      private_networks: [
+        {
+          id: '3634',
+        },
+      ],
+      link_slug: display_name,
+    };
+
+    const res = await this.axiosInstance.post('/v1/vps/server', vpsParams);
+    return res.data;
+  }
+
+  /*
+   * Создать VPS с custom configuration
+   *  https://developer.beget.com/#post-/v1/vps/server
+   */
+  async createVPS3(display_name: string, ssh_key = 10403) {
+    const vpsParams: CreateVPSparams = {
+      display_name: display_name,
+      hostname: display_name,
+      configuration_params: {
+        cpu_count: 2,
+        disk_size: 10 * 1024,
+        memory: 1024,
+      },
 
       // Информация о ПО, которое необходимо установить
       software: {
