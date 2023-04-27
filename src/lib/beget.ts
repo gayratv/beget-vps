@@ -270,6 +270,7 @@ export class Beget {
     vpsList.vps.forEach(async (val) => {
       await this.deleteVPS(val.id);
     });
+    console.log('Все VPS удалены');
   }
 
   async generateConfigSSH(
@@ -295,7 +296,14 @@ host ${val.display_name}
   IdentityFile ${lunix ? ubuntuSSHpriv : dosSSHpriv}
       
       `;
-      configText += newSSH;
+      const newSSHa = `
+host ${val.display_name}a
+  HostName ${val.ip_address}
+  User docker
+  IdentityFile ${lunix ? ubuntuSSHpriv : dosSSHpriv}
+      
+      `;
+      configText += newSSH + newSSHa;
     });
     await fs.writeFile(configFileName, configText, 'utf8');
     try {
